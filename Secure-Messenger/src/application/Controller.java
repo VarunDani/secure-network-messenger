@@ -2,12 +2,14 @@ package application;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.sql.ClientInfoStatus;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -86,20 +88,28 @@ public class Controller implements Initializable{
 			            // clear text
 			            messageBox.setText("");
 			            
-			            
+			            Socket client = null;
 			            try
 			            {
-			            	Socket client = new Socket("localhost", 12000);
+			            	client = new Socket("192.168.0.17", 12000);
 					         
 					         System.out.println("Just connected to " + client.getRemoteSocketAddress());
 					         OutputStream outToServer = client.getOutputStream();
 					         DataOutputStream out = new DataOutputStream(outToServer);
-					         out.writeUTF("dvdv ");
-					         client.close();
+					         out.writeUTF(text);
+					         //client.close();
 			            }
 			            catch(Exception e)
 			            {
 			            	
+			            }
+			            finally
+			            {
+			            	try {
+								client.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
 			            }
 						 
 			        }
@@ -127,11 +137,22 @@ public class Controller implements Initializable{
 						            DataInputStream in = new DataInputStream(server.getInputStream());
 						            
 						            DeccryptUtil d = new DeccryptUtil();
-						            d.decryptChatMessage(in.readUTF());
-						            System.out.println("message from other client : "+in.readUTF());
+						            
+						            try
+						            {
+						            	String readFile = in.readUTF();
+						            	System.out.println("message from other client : "+readFile);
+						            	d.decryptChatMessage(readFile);
+						            	
+						            	items.add(readFile);
+						            }
+						            catch(EOFException  ee)
+						            {
+						            	ee.printStackTrace();
+						            }
 						            
 						            //Thread.sleep(5000);
-						            items.add(in.readUTF());
+						            
 						            //Do not write for now It will be done by utility 
 						            //DataOutputStream out = new DataOutputStream(server.getOutputStream());
 						            //out.writeUTF("");
@@ -162,7 +183,7 @@ public class Controller implements Initializable{
 	{
 		try {
 			
-			 Socket client = new Socket("localhost", 11000);
+			 Socket client = new Socket("192.168.0.17", 11000);
 	         
 	         System.out.println("Just connected to " + client.getRemoteSocketAddress());
 	         OutputStream outToServer = client.getOutputStream();
