@@ -10,14 +10,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -121,7 +121,7 @@ public class Controller implements Initializable{
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			/*Timer task = new Timer();
+			Timer task = new Timer();
 			task.schedule(
 				    new TimerTask() {
 
@@ -133,6 +133,7 @@ public class Controller implements Initializable{
 				        		{
 				        			Socket server = serverSocket.accept();
 						            
+				        			
 						            System.out.println("Just connected to " + server.getRemoteSocketAddress());
 						            DataInputStream in = new DataInputStream(server.getInputStream());
 						            
@@ -144,7 +145,13 @@ public class Controller implements Initializable{
 						            	System.out.println("message from other client : "+readFile);
 						            	d.decryptChatMessage(readFile);
 						            	
-						            	items.add(readFile);
+						            	Platform.runLater(new Runnable() {
+						            	    public void run() {
+						            	    	items.add(readFile);
+						            	    }
+						            	});
+						            	
+						            	
 						            }
 						            catch(EOFException  ee)
 						            {
@@ -166,52 +173,6 @@ public class Controller implements Initializable{
 				        	}
 				        }
 				    }, 0, 3000);
-			
-			*/
-			
-			Timeline fiveSecondsWonder = new Timeline(new KeyFrame(Duration.INDEFINITE, new EventHandler<ActionEvent>() {
-
-			    @Override
-			    public void handle(ActionEvent event) {
-			        
-			    	try
-	        		{
-	        			Socket server = serverSocket.accept();
-			            
-			            System.out.println("Just connected to " + server.getRemoteSocketAddress());
-			            DataInputStream in = new DataInputStream(server.getInputStream());
-			            
-			            DeccryptUtil d = new DeccryptUtil();
-			            
-			            try
-			            {
-			            	String readFile = in.readUTF();
-			            	System.out.println("message from other client : "+readFile);
-			            	d.decryptChatMessage(readFile);
-			            	
-			            	items.add(readFile);
-			            }
-			            catch(EOFException  ee)
-			            {
-			            	ee.printStackTrace();
-			            }
-			            
-			            //Thread.sleep(5000);
-			            
-			            //Do not write for now It will be done by utility 
-			            //DataOutputStream out = new DataOutputStream(server.getOutputStream());
-			            //out.writeUTF("");
-			            server.close();
-	        		}
-	        		catch(Exception e )
-	        		{
-	        			e.printStackTrace();
-	        		}
-			    	
-			    }
-			}));
-			fiveSecondsWonder.setCycleCount(Timeline.INDEFINITE);
-			fiveSecondsWonder.play();
 			
 			
 		}
