@@ -27,6 +27,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -47,16 +48,22 @@ public class Controller implements Initializable{
 	//Two lists of main messenger 
 	
 	@FXML
-	private ListView<String> userList;
+	private ListView<User> userList;
 	
 	@FXML
-	private ListView<String> chatMessages;
+	private ListView<Message> chatMessages;
 	
-	ObservableList<String> items =FXCollections.observableArrayList ("User1", "User2", "User3", "User4");
-	ObservableList<String> messeges =FXCollections.observableArrayList ("aa", "bb", "cc", "dd");
+	ObservableList<User> items =FXCollections.observableArrayList ();
+
+    
+	//ObservableList<String> messeges =FXCollections.observableArrayList ("aa", "bb", "cc", "dd");
 	
+	ObservableList<Message> messeges = FXCollections.observableArrayList();
 	
 	private ServerSocket serverSocket;
+	
+	@FXML
+	private AnchorPane anchorPane1;
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
@@ -73,8 +80,17 @@ public class Controller implements Initializable{
 			
 			fadeTransition(mainPane);
 			
+			
 			userList.setItems(items);
+			
+			items.add(new User("Hello"));
+			
+			userList.setCellFactory((ListView<User> l) -> new UserListCell());
+			
+			
 			chatMessages.setItems(messeges);
+			chatMessages.setCellFactory((ListView<Message> l) -> new MessegeListCell());
+			
 			
 			messageBox.setOnKeyPressed(new EventHandler<KeyEvent>() {
 			    @Override
@@ -83,15 +99,15 @@ public class Controller implements Initializable{
 			            String text = messageBox.getText();
 
 			            // do your thing...
-			            messeges.add(text);
-			            
+			            //messeges.add(text);
+			            messeges.add(new Message(text,true));
 			            // clear text
 			            messageBox.setText("");
 			            
 			            Socket client = null;
 			            try
 			            {
-			            	client = new Socket("192.168.0.17", 12000);
+			            	client = new Socket("localhost", 12000);
 					         
 					         System.out.println("Just connected to " + client.getRemoteSocketAddress());
 					         OutputStream outToServer = client.getOutputStream();
@@ -147,7 +163,7 @@ public class Controller implements Initializable{
 						            	
 						            	Platform.runLater(new Runnable() {
 						            	    public void run() {
-						            	    	items.add(readFile);
+						            	    	messeges.add(new Message(readFile,true));
 						            	    }
 						            	});
 						            	
@@ -175,6 +191,7 @@ public class Controller implements Initializable{
 				    }, 0, 3000);
 			
 			
+			
 		}
 		
 		
@@ -190,7 +207,7 @@ public class Controller implements Initializable{
 	{
 		try {
 			
-			 Socket client = new Socket("192.168.0.17", 11000);
+			 Socket client = new Socket("localhost", 11000);
 	         
 	         System.out.println("Just connected to " + client.getRemoteSocketAddress());
 	         OutputStream outToServer = client.getOutputStream();

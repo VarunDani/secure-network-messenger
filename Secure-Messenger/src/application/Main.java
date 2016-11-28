@@ -100,4 +100,11 @@ public class Main extends Application {
 		//Initializing Main Server Socket of Each Client serverSocket = new ServerSocket(11000);
 		launch(args);
 	}
+	
+	@Override
+	public void stop(){
+	    System.out.println("Stage is Closing End All Application Threads");
+	    System.exit(0);
+	}
+	
 }
