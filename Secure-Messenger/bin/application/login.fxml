@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 
-
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="537.0" prefWidth="917.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Controller" fx:id="loginPanel">
+<Pane fx:id="loginPanel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="537.0" prefWidth="917.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Controller">
    <children>
-      <TextField layoutX="266.0" layoutY="132.0" prefHeight="63.0" prefWidth="386.0" promptText="User Name">
+      <TextField layoutX="266.0" layoutY="132.0" prefHeight="63.0" prefWidth="386.0" promptText="User Name" fx:id="userName">
          <font>
             <Font size="24.0" />
          </font>
       </TextField>
-      <Button layoutX="265.0" layoutY="308.0" mnemonicParsing="false" prefHeight="54.0" prefWidth="386.0" text="Login" fx:id="submitBtn" onAction="#authenticateClient"> 
+      <Button fx:id="submitBtn" layoutX="265.0" layoutY="308.0" mnemonicParsing="false" onAction="#authenticateClient" prefHeight="54.0" prefWidth="386.0" text="Login"> 
          <font>
             <Font size="24.0" />
          </font>
       </Button>
-      <PasswordField layoutX="265.0" layoutY="215.0" prefHeight="63.0" prefWidth="386.0" promptText="Password">
+      <PasswordField layoutX="265.0" layoutY="215.0" prefHeight="63.0" prefWidth="386.0" promptText="Password" fx:id="password">
          <font>
             <Font size="24.0" />
          </font>
@@ -33,5 +33,10 @@
       <Text layoutX="245.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Developed By : " />
       <Text layoutX="361.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Varun Dani (vxd162230)" />
       <Text layoutX="534.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Jay Shah (jas160360))" />
+      <Label layoutX="297.0" layoutY="392.0" prefHeight="21.0" prefWidth="354.0" text="Please Enter Correct User Name or password " textFill="#c61c1c" visible="false" fx:id="errorMsg">
+         <font>
+            <Font name="System Bold" size="15.0" />
+         </font>
+      </Label>
    </children>
 </Pane>

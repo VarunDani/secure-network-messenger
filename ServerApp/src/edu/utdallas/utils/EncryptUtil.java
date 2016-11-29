@@ -1,4 +1,4 @@
-package util;
+package edu.utdallas.utils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

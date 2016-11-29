@@ -6,9 +6,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -23,7 +25,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -32,9 +36,13 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import util.DeccryptUtil;
+import util.EncryptUtil;
 
 public class Controller implements Initializable{
 
+	
+	static  String SERVER_IP = null;
+	static  int SERVER_PORT = 11000;
 	
 	@FXML
     private Pane loginPanel;
@@ -44,6 +52,14 @@ public class Controller implements Initializable{
 	private Button submitBtn;
 	@FXML
 	private TextField messageBox;
+	@FXML
+	private Label errorMsg;
+	@FXML
+	private TextField userName;
+	@FXML 
+	private PasswordField password;
+	
+	
 	
 	//Two lists of main messenger 
 	
@@ -69,6 +85,28 @@ public class Controller implements Initializable{
 	public void initialize(URL location, ResourceBundle resources) {
 		// TODO Auto-generated method stub
 		//System.out.println("dvdv");
+		
+		
+		//Initialize Server IP
+
+		// load a properties file
+		if(SERVER_IP==null)
+		{
+			try
+			{
+				Properties prop = new Properties();
+				prop.load(Controller.class.getResourceAsStream("/ServerConfig.properties"));
+				
+				// get the property value and print it out
+				SERVER_IP = prop.getProperty("SERVER_IP");
+				SERVER_PORT = Integer.parseInt(prop.getProperty("SERVER_PORT"));
+			}
+			catch(Exception e)
+			{
+				//Problem in Loading Property File 
+				e.printStackTrace();
+			}
+		}
 		
 		if(loginPanel!=null)
 		{
@@ -193,40 +231,76 @@ public class Controller implements Initializable{
 			
 			
 		}
-		
-		
-		
-		
-		
-		
-          
 	}
 	
 	@FXML
 	public void authenticateClient()
 	{
+		Socket client = null;
 		try {
 			
-			 Socket client = new Socket("localhost", 11000);
+			 client = new Socket(SERVER_IP, SERVER_PORT);
 	         
-	         System.out.println("Just connected to " + client.getRemoteSocketAddress());
-	         OutputStream outToServer = client.getOutputStream();
-	         DataOutputStream out = new DataOutputStream(outToServer);
+	         String user = userName.getText().trim();
+	         String passWD = password.getText().trim();
 	         
-	         out.writeUTF("Hello from " + client.getLocalSocketAddress());
-	         InputStream inFromServer = client.getInputStream();
-	         DataInputStream in = new DataInputStream(inFromServer);
+	         if(user.equals("") || passWD.equals(""))
+	         {
+	        	 errorMsg.setVisible(true);
+	        	 return;
+	         }
 	         
-	         System.out.println("Server says " + in.readUTF());
-	         client.close();
+	         BigInteger nonce;
+	         byte[] sendBytes;
+	         try
+	         {
+	        	 
+	        	 OutputStream outToServer = client.getOutputStream();
+	 	         DataOutputStream out = new DataOutputStream(outToServer);
+	 	         
+	        	 passWD = EncryptUtil.makeSHA512Hash(passWD);
+	        	 nonce = EncryptUtil.generateNonce();
+	        	 
+	        	 sendBytes = EncryptUtil.encryptData(EncryptUtil.mergeUserDetails(user,passWD,
+	        			 String.valueOf(nonce),String.valueOf(System.currentTimeMillis())));
+	        	 
+	        	 System.out.println("User Name : "+user);
+	        	 System.out.println("Encrypted SHA Password : "+passWD);
+	        	 System.out.println("Nonce : "+nonce);
+	        	 
+	        	 
+	        	 out.write(sendBytes);
+	        	 
+	        	 
+		         InputStream inFromServer = client.getInputStream();
+		         DataInputStream in = new DataInputStream(inFromServer);
+		         
+		         
+	        	
+	         }
+	         catch(Exception innerExp )
+	         {
+	        	 //Problem in Encrypting Data
+	        	 innerExp.printStackTrace();
+	         }
 	         
 	         //If Authenticated then change screen to Next Screen else Show Error Message
+	         
+	         
 			Main.changeScene("messenger.fxml");
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		finally{
+			try {
+				client.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
+	
 	
 	 private void fadeTransition(Node e){
 	        FadeTransition x=new FadeTransition(new Duration(1000),e);
