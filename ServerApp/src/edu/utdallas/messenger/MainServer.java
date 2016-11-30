@@ -4,6 +4,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -56,6 +58,8 @@ public class MainServer  extends Thread {
 		            
 		            System.out.println("This Should Work : "+decryptedData);
 		            
+		        	byte[] aesData;
+		        	MessegeSendBean replyBean = new MessegeSendBean();
 		            if(decryptedData.startsWith("Authentication~"))
 		            {
 		            	//Check For Authentication // TODO
@@ -68,24 +72,30 @@ public class MainServer  extends Thread {
 		            		{
 		            			throw new Exception ("This might be replay Attack from : "+server.getRemoteSocketAddress());
 		            		}
-		            		
-		            		
-		            		
+		            		IV = AES.getIVSpecs();
+		            		 aesData = AES.encrypyUseingAES(nonce, IV, "Authenticated"+BuddyList.getBuddyList()+"~"+System.currentTimeMillis());
+		            		 
+		            		 replyBean.setIV(IV);
+		            		 replyBean.setAESData(aesData);
 		            	}
 		            	else
 		            	{
 		            		//Not Authenticated 
-		            		
+		            		IV = AES.getIVSpecs();
+		            		 aesData = AES.encrypyUseingAES(nonce, IV, "UnAuthenticated"+"~"+System.currentTimeMillis());
+		            		 replyBean.setIV(IV);
+		            		 replyBean.setAESData(aesData);
 		            	}
-		            	
+		            	 OutputStream outToServer = server.getOutputStream();
+			        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+			        	 
+		            	 out.writeObject(replyBean);
 		            }
 		            else if(decryptedData.startsWith("GetSessionKey~"))
 		            {
 		            	//Get Session Key For Any Other Client  // TODO
 		            }
 		            
-		            DataOutputStream out = new DataOutputStream(server.getOutputStream());
-		            out.writeUTF("Authenticated");
 		            server.close();
 		            
 		         }

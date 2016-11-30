@@ -135,7 +135,7 @@ public class AES {
     }
     
     
-    public static byte[] decryptUseingAES(BigInteger key, byte[] IV, byte[] encryptedMsg )
+    public static String decryptUseingAES(BigInteger key, byte[] IV, byte[] encryptedMsg )
     {
     	 byte[] decryptedMsg = null;
     	try
@@ -161,7 +161,7 @@ public class AES {
     	{
     		System.out.println("Some Problem in AES Encryption");
     	}
-    	return decryptedMsg;
+    	return new String(decryptedMsg);
     }
     
     

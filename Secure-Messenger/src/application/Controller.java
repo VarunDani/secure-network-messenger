@@ -286,10 +286,25 @@ public class Controller implements Initializable{
 	        	 out.writeObject(encryptedMsg);
 	        	
 	        	 
-		         InputStream inFromServer = client.getInputStream();
-		         ObjectInputStream in = new ObjectInputStream(inFromServer);
-		         
-		         
+	        	 InputStream inFromServer = client.getInputStream();
+			     ObjectInputStream in = new ObjectInputStream(inFromServer);
+			     MessegeSendBean replyBean = (MessegeSendBean)in.readObject();
+			     
+			     
+			     	byte[] returnIV = replyBean.getIV();
+		            String decryptedData = AES.decryptUseingAES(nonce, returnIV, replyBean.getAESData());
+		            
+		            
+		            System.out.println("Decrypted At Client : "+decryptedData);
+		            if(decryptedData.startsWith("Authenticated"))
+		            {
+		            	Main.changeScene("messenger.fxml");
+		            }
+		            else
+		            {
+		            	errorMsg.setVisible(true);
+			        	return;
+		            }
 	        	
 	         }
 	         catch(Exception innerExp )
@@ -301,7 +316,7 @@ public class Controller implements Initializable{
 	         //If Authenticated then change screen to Next Screen else Show Error Message
 	         
 	         
-			Main.changeScene("messenger.fxml");
+			
 			
 		} catch (IOException e) {
 			e.printStackTrace();
