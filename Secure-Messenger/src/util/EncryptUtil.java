@@ -10,17 +10,19 @@ import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.ArrayList;
+
 import javax.crypto.Cipher;
+
+import com.google.common.base.Splitter;
+
 
 public class EncryptUtil {
 
@@ -28,81 +30,43 @@ public class EncryptUtil {
 	
 	private static final String PUBLIC_KEY_FILE = "Public.pem";
 	private static final String PRIVATE_KEY_FILE = "Private.pem";
-	
-	public static void main(String args[]) throws NoSuchAlgorithmException, IOException {
-		String passString="password";
-		System.out.println("plaintext password: "+passString);
-		String passSha = makeSHA512Hash(passString);
-		System.out.println("SHA512 password: " +passSha);
-		String username="jay";
-		BigInteger nonce = new BigInteger(512, new SecureRandom());
-		System.out.println("nonce: "+nonce);
-		String appended = appendedd(username, nonce, passSha);
-		String hmacr=HMAC(username, nonce, passSha);
-		//	System.out.println(Arrays.toString(appended.split("(?<=\\G.{245})")));
-		String sub1 = appended.substring(0, 245);
-		String sub2 = appended.substring(245,appended.length());
-		System.out.println("substring 1: "+sub1);
-		System.out.println("substring 2: "+sub2);
-		int len= appended.length();
-		System.out.println("length: "+ len);
-		System.out.println("hmacr: "+hmacr);
-		System.out.println();
-		
-		try {
-			System.out.println("-------GENRATE PUBLIC and PRIVATE KEY-------------");
-			KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-			keyPairGenerator.initialize(2048); //1024 used for normal securities
-			KeyPair keyPair = keyPairGenerator.generateKeyPair();
-			PublicKey publicKey = keyPair.getPublic();
-			PrivateKey privateKey = keyPair.getPrivate();
-			System.out.println("Public Key - " + publicKey);
-			System.out.println("Private Key - " + privateKey);
-			
-			//Pullingout parameters which makes up Key		 
-			System.out.println("\n------- PULLING OUT PARAMETERS WHICH MAKES KEYPAIR----------\n");
-			KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-			RSAPublicKeySpec rsaPubKeySpec = keyFactory.getKeySpec(publicKey, RSAPublicKeySpec.class);
-			RSAPrivateKeySpec rsaPrivKeySpec = keyFactory.getKeySpec(privateKey, RSAPrivateKeySpec.class);
-			System.out.println("PubKey Modulus : " + rsaPubKeySpec.getModulus());
-			System.out.println("PubKey Exponent : " + rsaPubKeySpec.getPublicExponent());
-			System.out.println("PrivKey Modulus : " + rsaPrivKeySpec.getModulus());
-			System.out.println("PrivKey Exponent : " + rsaPrivKeySpec.getPrivateExponent());
-			
-			//Share public key with other so they can encrypt data and decrypt thoses using private key(Don't share with Other)
-			System.out.println("\n--------SAVING PUBLIC KEY AND PRIVATE KEY TO FILES-------\n");
-			EncryptUtil rsaObj = new EncryptUtil();
-			rsaObj.saveKeys(PUBLIC_KEY_FILE, rsaPubKeySpec.getModulus(), rsaPubKeySpec.getPublicExponent());
-			rsaObj.saveKeys(PRIVATE_KEY_FILE, rsaPrivKeySpec.getModulus(), rsaPrivKeySpec.getPrivateExponent());
-			
-			//Encrypt Data using Public Key
-			System.out.println("\n----------------ENCRYPTION STARTED------------");
-			byte[] encryptedData1 = rsaObj.encryptData(sub1);
-			byte[] encryptedData2 = rsaObj.encryptData(sub2);
-			byte[] destination = new byte[encryptedData1.length + encryptedData2.length];
-			// copy encryptedData1 into start of destination (from pos 0, copy ciphertext.length bytes)
-			System.arraycopy(encryptedData1, 0, destination, 0, encryptedData1.length);
-			// copy encryptedData2 into end of destination
-			System.arraycopy(encryptedData2, 0, destination, encryptedData1.length, encryptedData2.length);
-			System.out.println("encrypted message: "+destination);
-			System.out.println("----------------ENCRYPTION COMPLETED------------");
-			
-			//Decrypt Data using Private Key
-			System.out.println("\n----------------DECRYPTION STARTED------------");
-			String xyz= rsaObj.decryptData(encryptedData1);
-			String abc= rsaObj.decryptData(encryptedData2);
-			StringBuilder sb1 = new StringBuilder(14);
-			sb1.append(xyz).append(abc);
-			String app = sb1.toString();
-			System.out.println("decrypted message: "+app);
-			} catch (NoSuchAlgorithmException e) {
+
+
+	public static void main(String[] args) {
+//		EncryptUtil rsaObj = new EncryptUtil();
+			String passString="password";
+			System.out.println("plaintext password: "+passString);
+			try
+			{
+				String passSha = makeSHA512Hash(passString);
+				System.out.println("SHA512 password: " +passSha);
+				String username="jay";
+				BigInteger nonce = new BigInteger(512, new SecureRandom());
+				System.out.println("nonce: "+nonce);
+				String appended = appendedd(username, nonce, passSha);
+			//	String hmacr=HMAC(username, nonce, passSha);
+				encryptPrivate(appended);
+				
+					/*
+					//Decrypt Data using Private Key
+					System.out.println("\n----------------DECRYPTION STARTED------------");
+					String xyz= rsaObj.decryptData(encryptedData1);
+					String abc= rsaObj.decryptData(encryptedData2);
+					StringBuilder sb1 = new StringBuilder(14);
+					sb1.append(xyz).append(abc);
+					String app = sb1.toString();
+					System.out.println("decrypted message: "+app);
+					
+				System.out.println("----------------DECRYPTION COMPLETED------------");
+				*/
+			}
+			catch(Exception e)
+			{
 				e.printStackTrace();
-				}catch (InvalidKeySpecException e) {
-					e.printStackTrace();
-					}
-		System.out.println("----------------DECRYPTION COMPLETED------------");
-		
-		}
+			}
+	}
+	
+	
 	
 	public static String makeSHA512Hash(String input) throws NoSuchAlgorithmException, UnsupportedEncodingException {
 		MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -218,6 +182,29 @@ public class EncryptUtil {
 		 return new String(descryptedData);
 		 }
 	 
+	 public static void encryptPrivate(String appended) throws IOException{
+			
+			ArrayList<byte []> encrypted_data = new ArrayList<byte []>();
+			for(final String token : Splitter.fixedLength(245).split(appended)){
+		//		System.out.println("string token "+token);
+				encrypted_data.add(EncryptUtil.encryptDataPrivate(token));
+	   			}
+			System.out.println("Encrypted data using Server's Private key"+encrypted_data);
+
+		}
+
+	 public static void encryptPrivateAA(String appended) throws IOException{
+			
+			ArrayList<byte []> encrypted_data = new ArrayList<byte []>();
+			for(final String token : Splitter.fixedLength(245).split(appended)){
+		//		System.out.println("string token "+token);
+				encrypted_data.add(EncryptUtil.encryptDataPrivate(token));
+	   			}
+			System.out.println("Encrypted data using Server's Private key"+encrypted_data);
+
+		}
+	 
+	 
 	/**
 	 * This method will Encrypt Data Using Private Key 
 	 * 
@@ -280,6 +267,7 @@ public class EncryptUtil {
 		 return null;
 		 }
 	 
+	
 
 	 /**
 	  * 
@@ -289,9 +277,7 @@ public class EncryptUtil {
 	  * @return
 	  * @throws IOException
 	  */
-	 public  static byte[] encryptData(String data) throws IOException {
-		 System.out.println("Data Before Encryption :" + data);
-		 byte[] dataToEncrypt = data.getBytes();
+	 public  static byte[] encryptData(byte[] dataToEncrypt) throws IOException {
 		 byte[] encryptedData = null;
 		 try {
 			 PublicKey pubKey = readPublicKeyFromFile(PUBLIC_KEY_FILE);
@@ -365,7 +351,7 @@ public class EncryptUtil {
 	 
 	 public static BigInteger generateNonce()
 	 {
-		 return generateNonce(512);
+		 return generateNonce(128);
 	 }
 	 
 	 public static String mergeUserDetails(String userName,String password , String nonce , String timestamp)
@@ -373,4 +359,15 @@ public class EncryptUtil {
 		 return userName+"~"+password+"~"+nonce+"~"+timestamp;
 	 }
 	 
+	 public static String mergeAESDetails(String userName,String password, String timestamp)
+	 {
+		 return "Authentication~"+userName+"~"+password+"~"+timestamp;
+	 }
+	 
+	 
+	 
+	 public static boolean currentTimeStampChecking(String inTime)
+	 {
+		 return (System.currentTimeMillis())<Long.valueOf(inTime)+3000;
+	 }
 }

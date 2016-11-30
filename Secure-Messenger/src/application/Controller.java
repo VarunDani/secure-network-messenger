@@ -5,6 +5,8 @@ import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.ServerSocket;
@@ -35,6 +37,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import model.MessegeSendBean;
+import util.AES;
 import util.DeccryptUtil;
 import util.EncryptUtil;
 
@@ -251,29 +255,39 @@ public class Controller implements Initializable{
 	         }
 	         
 	         BigInteger nonce;
-	         byte[] sendBytes;
+	         byte[] aesData;
+	         byte[] IV;
+	         byte[] key;
 	         try
 	         {
 	        	 
 	        	 OutputStream outToServer = client.getOutputStream();
-	 	         DataOutputStream out = new DataOutputStream(outToServer);
+	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+	             
+	             
+	 	         //DataOutputStream out = new DataOutputStream(outToServer);
 	 	         
 	        	 passWD = EncryptUtil.makeSHA512Hash(passWD);
 	        	 nonce = EncryptUtil.generateNonce();
 	        	 
-	        	 sendBytes = EncryptUtil.encryptData(EncryptUtil.mergeUserDetails(user,passWD,
-	        			 String.valueOf(nonce),String.valueOf(System.currentTimeMillis())));
+	        	 IV = AES.getIVSpecs();
+	        	 aesData = AES.encrypyUseingAES(nonce, IV, EncryptUtil.mergeAESDetails(user, passWD, 
+	        			 									String.valueOf(System.currentTimeMillis())));
+	        	 
+
+	        	 key =  EncryptUtil.encryptData(String.valueOf(nonce).getBytes());
+	        	 
+	        	 MessegeSendBean encryptedMsg = new MessegeSendBean(key, aesData, IV);
 	        	 
 	        	 System.out.println("User Name : "+user);
 	        	 System.out.println("Encrypted SHA Password : "+passWD);
 	        	 System.out.println("Nonce : "+nonce);
 	        	 
-	        	 
-	        	 out.write(sendBytes);
-	        	 
+	        	 out.writeObject(encryptedMsg);
+	        	
 	        	 
 		         InputStream inFromServer = client.getInputStream();
-		         DataInputStream in = new DataInputStream(inFromServer);
+		         ObjectInputStream in = new ObjectInputStream(inFromServer);
 		         
 		         
 	        	
