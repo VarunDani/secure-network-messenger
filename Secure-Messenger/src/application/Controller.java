@@ -1,8 +1,5 @@
 package application;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -12,6 +9,7 @@ import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Timer;
@@ -26,6 +24,8 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -33,13 +33,13 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import model.MessegeSendBean;
 import util.AES;
-import util.DeccryptUtil;
 import util.EncryptUtil;
 
 public class Controller implements Initializable{
@@ -47,6 +47,7 @@ public class Controller implements Initializable{
 	
 	static  String SERVER_IP = null;
 	static  int SERVER_PORT = 11000;
+	static int CLIENT_PORT = 12000;
 	
 	@FXML
     private Pane loginPanel;
@@ -73,12 +74,16 @@ public class Controller implements Initializable{
 	@FXML
 	private ListView<Message> chatMessages;
 	
-	ObservableList<User> items =FXCollections.observableArrayList ();
-
+	static ObservableList<User> items =FXCollections.observableArrayList ();
+	static String userID = "";
+    static BigInteger myNonce;
+    static HashMap<String,String> myIPList = new HashMap<String,String>();
+    static HashMap<String,BigInteger> myKeyList = new HashMap<String,BigInteger>();
     
 	//ObservableList<String> messeges =FXCollections.observableArrayList ("aa", "bb", "cc", "dd");
 	
-	ObservableList<Message> messeges = FXCollections.observableArrayList();
+	static HashMap<String,ObservableList<Message>> userMsgs = new  HashMap<String,ObservableList<Message>> ();
+	
 	
 	private ServerSocket serverSocket;
 	
@@ -87,12 +92,6 @@ public class Controller implements Initializable{
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
-		// TODO Auto-generated method stub
-		//System.out.println("dvdv");
-		
-		
-		//Initialize Server IP
-
 		// load a properties file
 		if(SERVER_IP==null)
 		{
@@ -104,6 +103,8 @@ public class Controller implements Initializable{
 				// get the property value and print it out
 				SERVER_IP = prop.getProperty("SERVER_IP");
 				SERVER_PORT = Integer.parseInt(prop.getProperty("SERVER_PORT"));
+				CLIENT_PORT = Integer.parseInt(prop.getProperty("CLIENT_PORT"));
+				
 			}
 			catch(Exception e)
 			{
@@ -115,6 +116,24 @@ public class Controller implements Initializable{
 		if(loginPanel!=null)
 		{
 			fadeTransition(loginPanel);
+			userName.setOnKeyPressed(new EventHandler<KeyEvent>() {
+			    @Override
+			    public void handle(KeyEvent keyEvent) {
+			        if (keyEvent.getCode() == KeyCode.ENTER)  {
+			        	password.requestFocus();
+			        }
+			    }
+			});
+			
+			password.setOnKeyPressed(new EventHandler<KeyEvent>() {
+			    @Override
+			    public void handle(KeyEvent keyEvent) {
+			        if (keyEvent.getCode() == KeyCode.ENTER)  {
+			        	authenticateClient();
+			        }
+			    }
+			});
+			
 		}
 		if(mainPane!=null)
 		{
@@ -124,13 +143,124 @@ public class Controller implements Initializable{
 			
 			
 			userList.setItems(items);
-			
-			items.add(new User("Hello"));
-			
 			userList.setCellFactory((ListView<User> l) -> new UserListCell());
+			userList.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			        @Override
+			        public void handle(MouseEvent event) {
+			            System.out.println("clicked on " + userList.getSelectionModel().getSelectedItem().toString());
+			            String userName = userList.getSelectionModel().getSelectedItem().getUserName();
+			            if(userMsgs.get(userName)!=null && userMsgs.get(userName).size()>0)
+			            {
+			            	chatMessages.setItems(userMsgs.get(userName));
+			            }
+			            else
+			            {
+			            	//Go for hit to Server For this selected User 
+			            	Socket client = null;
+			            	try
+			            	{
+			            		
+			            		 client = new Socket(SERVER_IP, SERVER_PORT);
+			        	         
+			        	         byte[] aesData;
+			        	         byte[] IV;
+			        	         byte[] key;
+			        	         
+			                  	 OutputStream outToServer = client.getOutputStream();
+			    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+			    	             
+			    	             
+			    	        	 IV = AES.getIVSpecs();
+			    	        	 aesData = AES.encrypyUseingAES(myNonce, IV, 
+			    	        			 "GetSessionKey~"+userID+"~"+userName+"~"+String.valueOf(System.currentTimeMillis()));
+			    	        	 
+
+			    	        	 key =  EncryptUtil.encryptData(String.valueOf(myNonce).getBytes());
+			    	        	 MessegeSendBean encryptedMsg = new MessegeSendBean(key, aesData, IV);
+			    	        	 out.writeObject(encryptedMsg);
+			    	        	 
+			    	        	 
+			    	        	 
+			    	        	 InputStream inFromServer = client.getInputStream();
+			    			     ObjectInputStream in = new ObjectInputStream(inFromServer);
+			    			     MessegeSendBean replyBean = (MessegeSendBean)in.readObject();
+			    			     
+			    			     
+		    			     	byte[] returnIV = replyBean.getIV();
+		    		            String decryptedData = AES.decryptUseingAES(myNonce, returnIV, replyBean.getAESData());
+		    		            
+		    		            
+		    		            System.out.println("Decrypted At Client For Key Request: "+decryptedData);
+		    		            
+		    		            if(decryptedData.startsWith("Available~"))
+		    		            {
+		    		            	String[] userData = decryptedData.split("~");
+		    		            	myIPList.put(userName, userData[2]);
+		    		            	myKeyList.put(userName, new BigInteger(userData[3]));
+		    		            	
+		    		            	//Send Ticket to Client 
+		    		            	boolean success = sendDataToClient(replyBean,userName);
+		    		            	
+		    		            	if(success)
+		    		            	{
+		    		            		userMsgs.get(userName).add(new Message("Messages in Conversation are End to End Encrypted",true));
+		    		            		chatMessages.setItems(userMsgs.get(userName));
+		    		            	}
+		    		            	else
+		    		            	{
+		    		            		//Problem in Connecting 
+		    		            		userNotAvailable(userName);
+		    		            	}
+		    		            }
+		    		            else
+		    		            {
+		    		            	// Client is Not available 
+		    		            	userNotAvailable(userName);
+		    		            }
+			    		            
+			    		            
+			            	}
+			            	catch(Exception e)
+			            	{
+			            		e.printStackTrace();
+			            	}
+			            }
+			            
+			        }
+
+					private boolean sendDataToClient(MessegeSendBean replyBean,String otehrClientID) 
+					{
+						Socket otherClient = null;
+						try
+						{
+							otherClient = new Socket(myIPList.get(otehrClientID), CLIENT_PORT);
+							  
+		                  	 OutputStream outToServer = otherClient.getOutputStream();
+		    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+		    	        	 
+		    	        	 out.writeObject(replyBean);
+		    	        	 
+							otherClient.close();
+							return true;
+						}
+						catch(Exception e)
+						{
+							return false;
+						}
+						
+					}
+
+					private void userNotAvailable(String userName) {
+						Alert alert = new Alert(AlertType.WARNING);
+						alert.setTitle("Clent Not Available Warning ");
+						alert.setHeaderText("Requested Client is Not Online");
+						alert.setContentText("User "+userName+" is not available in messenger application. Please Try again Later.");
+
+						alert.showAndWait();
+					}
+			    });
 			
-			
-			chatMessages.setItems(messeges);
+			//chatMessages.setItems(messeges);
 			chatMessages.setCellFactory((ListView<Message> l) -> new MessegeListCell());
 			
 			
@@ -140,42 +270,47 @@ public class Controller implements Initializable{
 			        if (keyEvent.getCode() == KeyCode.ENTER)  {
 			            String text = messageBox.getText();
 
+			            if(userList.getSelectionModel().getSelectedItem()==null)
+			            {
+			            	selectUserAlert();
+			            	return;
+			            }
+			            String userName = userList.getSelectionModel().getSelectedItem().getUserName();
+			            
 			            // do your thing...
-			            //messeges.add(text);
-			            messeges.add(new Message(text,true));
-			            // clear text
+			            userMsgs.get(userName).add(new Message(text,true));
 			            messageBox.setText("");
 			            
-			            Socket client = null;
-			            try
-			            {
-			            	client = new Socket("localhost", 12000);
-					         
-					         System.out.println("Just connected to " + client.getRemoteSocketAddress());
-					         OutputStream outToServer = client.getOutputStream();
-					         DataOutputStream out = new DataOutputStream(outToServer);
-					         out.writeUTF(text);
-					         //client.close();
-			            }
-			            catch(Exception e)
-			            {
-			            	
-			            }
-			            finally
-			            {
-			            	try {
-								client.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-			            }
+			            Socket otherClient = null;
+						try
+						{
+							otherClient = new Socket(myIPList.get(userName), CLIENT_PORT);
+							
+		                  	 OutputStream outToServer = otherClient.getOutputStream();
+		    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+		    	        	 
+		    	        	 
+		    	        	 byte[] IV = AES.getIVSpecs();
+		    	        	 byte[] aesData = AES.encrypyUseingAES(myKeyList.get(userName), IV, text);
+		    	        	 MessegeSendBean encryptedMsg = new MessegeSendBean(null, aesData, IV);
+		    	        	 encryptedMsg.setTicket(null);
+		    	        	 encryptedMsg.setFromUser(userID);
+		    	        	 
+		    	        	 out.writeObject(encryptedMsg);
+		    	        	 
+							otherClient.close();
+						}
+						catch(Exception e)
+						{
+							
+						}
 						 
 			        }
 			    }
 			});
 			
 			try {
-				serverSocket = new ServerSocket(12000);
+				serverSocket = new ServerSocket(CLIENT_PORT);
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -190,37 +325,43 @@ public class Controller implements Initializable{
 				        		try
 				        		{
 				        			Socket server = serverSocket.accept();
-						            
-				        			
-						            System.out.println("Just connected to " + server.getRemoteSocketAddress());
-						            DataInputStream in = new DataInputStream(server.getInputStream());
-						            
-						            DeccryptUtil d = new DeccryptUtil();
+						            System.out.println("Messege Received From :" + server.getRemoteSocketAddress());
 						            
 						            try
 						            {
-						            	String readFile = in.readUTF();
-						            	System.out.println("message from other client : "+readFile);
-						            	d.decryptChatMessage(readFile);
 						            	
-						            	Platform.runLater(new Runnable() {
-						            	    public void run() {
-						            	    	messeges.add(new Message(readFile,true));
-						            	    }
-						            	});
+						            	  InputStream inFromServer = server.getInputStream();
+									      ObjectInputStream in = new ObjectInputStream(inFromServer);
+									         
+								          MessegeSendBean msgBean = (MessegeSendBean)in.readObject();
 						            	
-						            	
+								          
+								          if(msgBean.getTicket()!=null)
+								          {
+								        	  //This is First Message For verification
+								        	  
+								        	  String decryptedMessage = AES.decryptUseingAES(myNonce, msgBean.getTicketIV(), msgBean.getTicket());
+								        	  String msgArray[] = decryptedMessage.split("~");
+								        	  
+								        	  BigInteger commonKey = new BigInteger(msgArray[0]);
+								        	  myKeyList.put(msgArray[1], commonKey);
+								          }
+								          else
+								          {
+								        	  //This is After Message
+								        	  String decryptedMessage = AES.decryptUseingAES(myKeyList.get(msgBean.getFromUser()), msgBean.getIV(), msgBean.getAESData());
+								        	  Platform.runLater(new Runnable() {
+								            	    public void run() {
+								            	    	userMsgs.get(msgBean.getFromUser()).add(new Message(decryptedMessage,false));
+								            	    }
+								            	});
+								          }
 						            }
-						            catch(EOFException  ee)
+						            catch(Exception  ee)
 						            {
 						            	ee.printStackTrace();
 						            }
 						            
-						            //Thread.sleep(5000);
-						            
-						            //Do not write for now It will be done by utility 
-						            //DataOutputStream out = new DataOutputStream(server.getOutputStream());
-						            //out.writeUTF("");
 						            server.close();
 				        		}
 				        		catch(Exception e )
@@ -269,7 +410,7 @@ public class Controller implements Initializable{
 	 	         
 	        	 passWD = EncryptUtil.makeSHA512Hash(passWD);
 	        	 nonce = EncryptUtil.generateNonce();
-	        	 
+	        	 myNonce = nonce;
 	        	 IV = AES.getIVSpecs();
 	        	 aesData = AES.encrypyUseingAES(nonce, IV, EncryptUtil.mergeAESDetails(user, passWD, 
 	        			 									String.valueOf(System.currentTimeMillis())));
@@ -299,6 +440,8 @@ public class Controller implements Initializable{
 		            if(decryptedData.startsWith("Authenticated"))
 		            {
 		            	Main.changeScene("messenger.fxml");
+		            	setUsersPanel(decryptedData);
+		            	userID = user;
 		            }
 		            else
 		            {
@@ -331,6 +474,18 @@ public class Controller implements Initializable{
 	}
 	
 	
+	private void setUsersPanel(String decryptedData)
+	{
+		String[] userNames = decryptedData.split("~");
+		for (int i = 1; i < (userNames.length-1); i++) 
+		{
+			System.out.println("dv : "+userNames[i]);
+			items.add(new User(userNames[i]));
+			userMsgs.put(userNames[i],FXCollections.observableArrayList());
+		}
+	}
+	
+	
 	 private void fadeTransition(Node e){
 	        FadeTransition x=new FadeTransition(new Duration(1000),e);
 	        x.setFromValue(0);
@@ -340,4 +495,13 @@ public class Controller implements Initializable{
 	        x.play();
 	    }
 
+	 private void selectUserAlert() {
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setTitle("Select User");
+			alert.setHeaderText("Plese Select User First in Left Panel");
+			alert.setContentText("To Send Messege, Please Select User From Left Panel of Window");
+
+			alert.showAndWait();
+		}
+	 
 }

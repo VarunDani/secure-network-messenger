@@ -1,12 +1,7 @@
 package application;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -14,7 +9,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import util.DeccryptUtil;
 
 /**
  * This is Main Class that contains main method for launching Java FX Application
@@ -28,7 +22,6 @@ import util.DeccryptUtil;
 public class Main extends Application {
 	
 	static Stage stage;
-	private ServerSocket serverSocket;
 	
 	@Override
 	public void start(Stage primaryStage) {

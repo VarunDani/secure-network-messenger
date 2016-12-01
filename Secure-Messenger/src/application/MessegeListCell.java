@@ -20,7 +20,7 @@ public class MessegeListCell extends ListCell<Message> {
 	      setGraphic(null); 
 	    } else { 
 	      //setText(msg.getMessage() +" : "+ msg.getRecepient().toString()); 
-	    	setText(null); 
+	    	setText(msg.getMessage()); 
 	      if(msg.getRecepient())
 	      {
 	    	  setStyle("-fx-alignment: CENTER-RIGHT;");	  
@@ -29,12 +29,7 @@ public class MessegeListCell extends ListCell<Message> {
 	      {
 	    	  setStyle("-fx-alignment: CENTER-LEFT;");	
 	      }
-	      
-	      Label label = new Label(Icons.USER_ICON); 
-	      label.setFont(fontAwesome);
-	      label.setStyle("-fx-font-family: 'FontAwesome'");
-	      
-	      setGraphic(label); 
+	      setGraphic(null); 
 	    }
 	  } 
 	}

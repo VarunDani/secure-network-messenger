@@ -20,7 +20,7 @@ public class UserListCell extends ListCell<User>{
 	      setGraphic(null); 
 	    } else { 
 	      //setText(msg.getMessage() +" : "+ msg.getRecepient().toString()); 
-	    	setText("User"); 
+	      setText(usr.getUserName()); 
 	      Label label = new Label(Icons.USER_ICON); 
 	      label.setFont(fontAwesome);
 	      label.setStyle("-fx-font-family: 'FontAwesome';-fx-cell-size: 100px;-fx-font-size: 50px");

@@ -1,6 +1,5 @@
 package edu.utdallas.messenger;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -73,10 +72,14 @@ public class MainServer  extends Thread {
 		            			throw new Exception ("This might be replay Attack from : "+server.getRemoteSocketAddress());
 		            		}
 		            		IV = AES.getIVSpecs();
-		            		 aesData = AES.encrypyUseingAES(nonce, IV, "Authenticated"+BuddyList.getBuddyList()+"~"+System.currentTimeMillis());
+		            		 aesData = AES.encrypyUseingAES(nonce, IV, "Authenticated"+BuddyList.getBuddyList(userData[1])+"~"+System.currentTimeMillis());
 		            		 
 		            		 replyBean.setIV(IV);
 		            		 replyBean.setAESData(aesData);
+		            		 
+		            		 UserInfo.ipAddressMap.put(userData[1], server.getRemoteSocketAddress().toString().split("/")[1].split(":")[0]);
+		            		 UserInfo.nonceInfo.put(userData[1], nonce);
+		            		 //System.out.println("IP : "+UserInfo.ipAddressMap.get(userData[1]));
 		            	}
 		            	else
 		            	{
@@ -94,6 +97,49 @@ public class MainServer  extends Thread {
 		            else if(decryptedData.startsWith("GetSessionKey~"))
 		            {
 		            	//Get Session Key For Any Other Client  // TODO
+		            	String[] userData = decryptedData.split("~");
+		            	
+		            	if(!EncryptUtil.currentTimeStampChecking(userData[3]))
+	            		{
+	            			throw new Exception ("This might be replay Attack from : "+server.getRemoteSocketAddress());
+	            		}
+		            	
+		            	
+		            	//check if another User is online
+		            	if(UserInfo.ipAddressMap.get(userData[2])!=null)
+		            	{
+		            		//Generate Key For Client to Client Communication
+		            		BigInteger commonKey = EncryptUtil.generateNonce();
+		            		byte[] commonIV = AES.getIVSpecs();
+		            		byte[] ticket = AES.encrypyUseingAES(UserInfo.nonceInfo.get(userData[2]), commonIV, 
+		            				commonKey.toString()+"~"+userData[1]);
+		            		
+		            		IV = AES.getIVSpecs();
+		            		 aesData = AES.encrypyUseingAES(UserInfo.nonceInfo.get(userData[1]), IV, 
+		            				 "Available~"+userData[2]+"~"+UserInfo.ipAddressMap.get(userData[2])+"~"+commonKey+"~"+System.currentTimeMillis());
+		            		 
+		            		 replyBean = new MessegeSendBean();
+		            		 replyBean.setIV(IV);
+		            		 replyBean.setAESData(aesData);
+		            		 replyBean.setTicket(ticket);
+		            		 replyBean.setTicketIV(commonIV);
+		            	}
+		            	else
+		            	{
+		            		//User is offline 
+		            		IV = AES.getIVSpecs();
+		            		 aesData = AES.encrypyUseingAES(UserInfo.nonceInfo.get(userData[1]), IV, 
+		            				 "NotAvailable~"+System.currentTimeMillis());
+		            		 
+		            		 replyBean = new MessegeSendBean();
+		            		 replyBean.setIV(IV);
+		            		 replyBean.setAESData(aesData);
+		            		 
+		            	}
+		            	 OutputStream outToServer = server.getOutputStream();
+			        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
+			        	 
+		            	 out.writeObject(replyBean);	
 		            }
 		            
 		            server.close();

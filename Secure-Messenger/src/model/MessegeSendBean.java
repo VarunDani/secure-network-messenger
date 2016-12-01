@@ -15,6 +15,11 @@ public class MessegeSendBean implements Serializable{
 	private byte[] IV;
 	
 	
+	private byte[] ticket;
+	private byte[] ticketIV;
+	private String fromUser ;
+	
+	
 	public MessegeSendBean()
 	{
 		
@@ -43,6 +48,30 @@ public class MessegeSendBean implements Serializable{
 	}
 	public void setKey(byte[] key) {
 		this.key = key;
+	}
+
+	public byte[] getTicket() {
+		return ticket;
+	}
+
+	public void setTicket(byte[] ticket) {
+		this.ticket = ticket;
+	}
+
+	public byte[] getTicketIV() {
+		return ticketIV;
+	}
+
+	public void setTicketIV(byte[] ticketIV) {
+		this.ticketIV = ticketIV;
+	}
+
+	public String getFromUser() {
+		return fromUser;
+	}
+
+	public void setFromUser(String fromUser) {
+		this.fromUser = fromUser;
 	}
 	
 	

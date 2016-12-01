@@ -15,16 +15,17 @@
             <Font size="24.0" />
          </font>
       </TextField>
+       <PasswordField layoutX="265.0" layoutY="215.0" prefHeight="63.0" prefWidth="386.0" promptText="Password" fx:id="password">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </PasswordField>
       <Button fx:id="submitBtn" layoutX="265.0" layoutY="308.0" mnemonicParsing="false" onAction="#authenticateClient" prefHeight="54.0" prefWidth="386.0" text="Login"> 
          <font>
             <Font size="24.0" />
          </font>
       </Button>
-      <PasswordField layoutX="265.0" layoutY="215.0" prefHeight="63.0" prefWidth="386.0" promptText="Password" fx:id="password">
-         <font>
-            <Font size="24.0" />
-         </font>
-      </PasswordField>
+     
       <Text layoutX="238.0" layoutY="80.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Secure Network Messenger" wrappingWidth="468.6708984375">
          <font>
             <Font size="36.0" />
