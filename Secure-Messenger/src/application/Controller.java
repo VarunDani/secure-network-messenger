@@ -84,6 +84,7 @@ public class Controller implements Initializable{
 	
 	static HashMap<String,ObservableList<Message>> userMsgs = new  HashMap<String,ObservableList<Message>> ();
 	
+	//TODO Blocks - Addition og HMAC with different generated Keys 
 	
 	private ServerSocket serverSocket;
 	
@@ -180,7 +181,7 @@ public class Controller implements Initializable{
 			    	        	 out.writeObject(encryptedMsg);
 			    	        	 
 			    	        	 
-			    	        	 
+			    	        	 //TODO - Add HMAC
 			    	        	 InputStream inFromServer = client.getInputStream();
 			    			     ObjectInputStream in = new ObjectInputStream(inFromServer);
 			    			     MessegeSendBean replyBean = (MessegeSendBean)in.readObject();
@@ -198,7 +199,7 @@ public class Controller implements Initializable{
 		    		            	myIPList.put(userName, userData[2]);
 		    		            	myKeyList.put(userName, new BigInteger(userData[3]));
 		    		            	
-		    		            	//Send Ticket to Client 
+		    		            	//Send Ticket to Client //TODO - Add HMAC
 		    		            	boolean success = sendDataToClient(replyBean,userName);
 		    		            	
 		    		            	if(success)
@@ -289,7 +290,7 @@ public class Controller implements Initializable{
 		                  	 OutputStream outToServer = otherClient.getOutputStream();
 		    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
 		    	        	 
-		    	        	 
+		    	        	//TODO - Add HMAC
 		    	        	 byte[] IV = AES.getIVSpecs();
 		    	        	 byte[] aesData = AES.encrypyUseingAES(myKeyList.get(userName), IV, text);
 		    	        	 MessegeSendBean encryptedMsg = new MessegeSendBean(null, aesData, IV);
@@ -345,10 +346,14 @@ public class Controller implements Initializable{
 								        	  
 								        	  BigInteger commonKey = new BigInteger(msgArray[0]);
 								        	  myKeyList.put(msgArray[1], commonKey);
+								        	  
+								        	  //TODO - verify HMAC
 								          }
 								          else
 								          {
 								        	  //This is After Message
+								        	  //TODO - verify HMAC
+								        	  
 								        	  String decryptedMessage = AES.decryptUseingAES(myKeyList.get(msgBean.getFromUser()), msgBean.getIV(), msgBean.getAESData());
 								        	  Platform.runLater(new Runnable() {
 								            	    public void run() {
