@@ -30,7 +30,7 @@ public class BuddyList {
 		
 		ArrayList<String> newBuddyList3 = new ArrayList<String>();
 		newBuddyList3.add("Varun");
-		newBuddyList3.add("Ashwin");
+		newBuddyList3.add("Shriroop");
 		newBuddyList3.add("Jay");
 		newBuddyList3.add("Askash");
 		buddyList.put("Ashwin", newBuddyList3);

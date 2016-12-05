@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.ResourceBundle;
@@ -181,7 +182,6 @@ public class Controller implements Initializable{
 			    	        	 out.writeObject(encryptedMsg);
 			    	        	 
 			    	        	 
-			    	        	 //TODO - Add HMAC
 			    	        	 InputStream inFromServer = client.getInputStream();
 			    			     ObjectInputStream in = new ObjectInputStream(inFromServer);
 			    			     MessegeSendBean replyBean = (MessegeSendBean)in.readObject();
@@ -199,7 +199,7 @@ public class Controller implements Initializable{
 		    		            	myIPList.put(userName, userData[2]);
 		    		            	myKeyList.put(userName, new BigInteger(userData[3]));
 		    		            	
-		    		            	//Send Ticket to Client //TODO - Add HMAC
+		    		            	//Send Ticket to Client
 		    		            	boolean success = sendDataToClient(replyBean,userName);
 		    		            	
 		    		            	if(success)
@@ -251,14 +251,7 @@ public class Controller implements Initializable{
 						
 					}
 
-					private void userNotAvailable(String userName) {
-						Alert alert = new Alert(AlertType.WARNING);
-						alert.setTitle("Clent Not Available Warning ");
-						alert.setHeaderText("Requested Client is Not Online");
-						alert.setContentText("User "+userName+" is not available in messenger application. Please Try again Later.");
-
-						alert.showAndWait();
-					}
+				
 			    });
 			
 			//chatMessages.setItems(messeges);
@@ -291,11 +284,18 @@ public class Controller implements Initializable{
 		    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
 		    	        	 
 		    	        	//TODO - Add HMAC
+		    	        	 byte[] mac = EncryptUtil.hmacSHA256(text, 
+		    	        			 new BigInteger(myKeyList.get(userName).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName)))).toByteArray());
+		    	        	 
+		    	        	 System.out.println("MAC : "+mac);
+		    	        	 
+		    	        	 
 		    	        	 byte[] IV = AES.getIVSpecs();
 		    	        	 byte[] aesData = AES.encrypyUseingAES(myKeyList.get(userName), IV, text);
 		    	        	 MessegeSendBean encryptedMsg = new MessegeSendBean(null, aesData, IV);
 		    	        	 encryptedMsg.setTicket(null);
 		    	        	 encryptedMsg.setFromUser(userID);
+		    	        	 encryptedMsg.setMac(mac);
 		    	        	 
 		    	        	 out.writeObject(encryptedMsg);
 		    	        	 
@@ -347,14 +347,36 @@ public class Controller implements Initializable{
 								        	  BigInteger commonKey = new BigInteger(msgArray[0]);
 								        	  myKeyList.put(msgArray[1], commonKey);
 								        	  
-								        	  //TODO - verify HMAC
+								        	  userMsgs.get(msgArray[1]).add(new Message("Messages in Conversation are End to End Encrypted",true));
+								        	  
 								          }
 								          else
 								          {
 								        	  //This is After Message
 								        	  //TODO - verify HMAC
-								        	  
+								        	
 								        	  String decryptedMessage = AES.decryptUseingAES(myKeyList.get(msgBean.getFromUser()), msgBean.getIV(), msgBean.getAESData());
+								        	  if(decryptedMessage==null || 
+								        			  (decryptedMessage!=null && decryptedMessage.startsWith("NotAvailable")))
+								        	  {
+								        		  userNotAvailable("");
+								        		  return;
+								        	  }
+								        	  
+								        	  //calculate MAC
+								        	  byte[] calculatedMAC = EncryptUtil.hmacSHA256(decryptedMessage, 
+							    	        			 new BigInteger(myKeyList.get(msgBean.getFromUser()).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName)))).toByteArray());
+								        	  
+								        	  
+								        	 byte[] incomingMac = msgBean.getMac();
+								        	 
+								        	 if(!Arrays.equals(calculatedMAC, incomingMac))
+								        	 {
+								        		throw new Exception("Integrity Problem in Incoming Message ");
+								        	 }
+								        	 
+								        	 System.out.println("MAC verified");
+								        	 
 								        	  Platform.runLater(new Runnable() {
 								            	    public void run() {
 								            	    	userMsgs.get(msgBean.getFromUser()).add(new Message(decryptedMessage,false));
@@ -505,6 +527,15 @@ public class Controller implements Initializable{
 			alert.setTitle("Select User");
 			alert.setHeaderText("Plese Select User First in Left Panel");
 			alert.setContentText("To Send Messege, Please Select User From Left Panel of Window");
+
+			alert.showAndWait();
+		}
+	 
+		private void userNotAvailable(String userName) {
+			Alert alert = new Alert(AlertType.WARNING);
+			alert.setTitle("Clent Not Available Warning ");
+			alert.setHeaderText("Requested Client is Not Online");
+			alert.setContentText("User "+userName+" is not available in messenger application. Please Try again Later.");
 
 			alert.showAndWait();
 		}

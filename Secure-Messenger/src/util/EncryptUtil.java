@@ -20,6 +20,8 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 
 import com.google.common.base.Splitter;
 
@@ -370,4 +372,24 @@ public class EncryptUtil {
 	 {
 		 return (System.currentTimeMillis())<Long.valueOf(inTime)+3000;
 	 }
+	 
+	 
+	public static byte[] hmacSHA256(String data, byte[] key) throws Exception {
+		    String algorithm="HmacSHA256";
+		    Mac mac = Mac.getInstance(algorithm);
+		    mac.init(new SecretKeySpec(key, algorithm));
+		    return mac.doFinal(data.getBytes("UTF8"));
+		}
+
+	 public static String generateMAC(byte buffer) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+			MessageDigest md = MessageDigest.getInstance("SHA-512");
+			md.reset();
+			md.update(buffer);
+			byte[] digest = md.digest();
+			String hexStr = "";
+			for (int i = 0; i < digest.length; i++) {
+				hexStr +=  Integer.toString( ( digest[i] & 0xff ) + 0x100, 16).substring( 1 );
+				}
+			return hexStr;
+			}
 }

@@ -13,7 +13,7 @@ public class MessegeSendBean implements Serializable{
 	private byte[] key;
 	private byte[] AESData;
 	private byte[] IV;
-	
+	private byte[] mac;
 	
 	private byte[] ticket;
 	private byte[] ticketIV;
@@ -72,6 +72,14 @@ public class MessegeSendBean implements Serializable{
 
 	public void setFromUser(String fromUser) {
 		this.fromUser = fromUser;
+	}
+
+	public byte[] getMac() {
+		return mac;
+	}
+
+	public void setMac(byte[] mac) {
+		this.mac = mac;
 	}
 	
 	

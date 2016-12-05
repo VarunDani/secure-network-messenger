@@ -368,6 +368,8 @@ public class EncryptUtil {
 	 
 	 public static boolean currentTimeStampChecking(String inTime)
 	 {
-		 return (System.currentTimeMillis())<Long.valueOf(inTime)+3000;
+		 System.out.println("In time "+inTime);
+		 System.out.println("Sys Time "+System.currentTimeMillis()) ;
+		 return (System.currentTimeMillis())<Long.valueOf(inTime)+300000;
 	 }
 }
