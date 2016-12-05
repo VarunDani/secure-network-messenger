@@ -17,13 +17,10 @@ import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.ArrayList;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import com.google.common.base.Splitter;
 
 
 public class EncryptUtil {
@@ -47,7 +44,6 @@ public class EncryptUtil {
 				System.out.println("nonce: "+nonce);
 				String appended = appendedd(username, nonce, passSha);
 			//	String hmacr=HMAC(username, nonce, passSha);
-				encryptPrivate(appended);
 				
 					/*
 					//Decrypt Data using Private Key
@@ -183,29 +179,6 @@ public class EncryptUtil {
 				 } 
 		 return new String(descryptedData);
 		 }
-	 
-	 public static void encryptPrivate(String appended) throws IOException{
-			
-			ArrayList<byte []> encrypted_data = new ArrayList<byte []>();
-			for(final String token : Splitter.fixedLength(245).split(appended)){
-		//		System.out.println("string token "+token);
-				encrypted_data.add(EncryptUtil.encryptDataPrivate(token));
-	   			}
-			System.out.println("Encrypted data using Server's Private key"+encrypted_data);
-
-		}
-
-	 public static void encryptPrivateAA(String appended) throws IOException{
-			
-			ArrayList<byte []> encrypted_data = new ArrayList<byte []>();
-			for(final String token : Splitter.fixedLength(245).split(appended)){
-		//		System.out.println("string token "+token);
-				encrypted_data.add(EncryptUtil.encryptDataPrivate(token));
-	   			}
-			System.out.println("Encrypted data using Server's Private key"+encrypted_data);
-
-		}
-	 
 	 
 	/**
 	 * This method will Encrypt Data Using Private Key 

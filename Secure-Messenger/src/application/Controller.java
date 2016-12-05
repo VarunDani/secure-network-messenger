@@ -285,7 +285,7 @@ public class Controller implements Initializable{
 		    	        	 
 		    	        	//TODO - Add HMAC
 		    	        	 byte[] mac = EncryptUtil.hmacSHA256(text, 
-		    	        			 new BigInteger(myKeyList.get(userName).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName)))).toByteArray());
+		    	        			 new BigInteger(myKeyList.get(userName).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName).size()))).toByteArray());
 		    	        	 
 		    	        	 System.out.println("MAC : "+mac);
 		    	        	 
@@ -303,7 +303,7 @@ public class Controller implements Initializable{
 						}
 						catch(Exception e)
 						{
-							
+							e.printStackTrace();
 						}
 						 
 			        }
@@ -347,7 +347,12 @@ public class Controller implements Initializable{
 								        	  BigInteger commonKey = new BigInteger(msgArray[0]);
 								        	  myKeyList.put(msgArray[1], commonKey);
 								        	  
-								        	  userMsgs.get(msgArray[1]).add(new Message("Messages in Conversation are End to End Encrypted",true));
+								        	  Platform.runLater(new Runnable() {
+								            	    public void run() {
+								            	    	userMsgs.get(msgArray[1]).add(new Message("Messages in Conversation are End to End Encrypted",true));
+								            	    }
+								            	});
+								        	  
 								        	  
 								          }
 								          else
@@ -365,13 +370,19 @@ public class Controller implements Initializable{
 								        	  
 								        	  //calculate MAC
 								        	  byte[] calculatedMAC = EncryptUtil.hmacSHA256(decryptedMessage, 
-							    	        			 new BigInteger(myKeyList.get(msgBean.getFromUser()).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName)))).toByteArray());
+							    	        			 new BigInteger(myKeyList.get(msgBean.getFromUser()).toString())
+							    	        			 .add(new BigInteger(String.valueOf(userMsgs.get(msgBean.getFromUser()).size())))
+							    	        					 .add(new BigInteger("1")).toByteArray());
 								        	  
 								        	  
 								        	 byte[] incomingMac = msgBean.getMac();
 								        	 
+								        	 System.out.println(calculatedMAC);
+								        	 System.out.println(incomingMac);
+								        	 
 								        	 if(!Arrays.equals(calculatedMAC, incomingMac))
 								        	 {
+								        		 System.out.println("Hello");
 								        		throw new Exception("Integrity Problem in Incoming Message ");
 								        	 }
 								        	 
