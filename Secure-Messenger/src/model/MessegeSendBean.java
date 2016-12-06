@@ -5,7 +5,7 @@ import java.io.Serializable;
 public class MessegeSendBean implements Serializable{
 
 	/**
-	 * 
+	 * Serial version UID for serialize Object
 	 */
 	private static final long serialVersionUID = 1L;
 

@@ -1,7 +1,6 @@
 package application;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -16,7 +15,6 @@ import javafx.stage.Stage;
  * 
  * @version 1.0
  * @since v1.0
- * @author Varun Dani
  *
  */
 public class Main extends Application {

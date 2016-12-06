@@ -4,6 +4,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.text.Font;
 
+/**
+ * Customized List Cells for User Panel 
+ *
+ */
 public class UserListCell extends ListCell<User>{
 
 	static Font fontAwesome;

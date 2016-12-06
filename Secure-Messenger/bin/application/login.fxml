@@ -33,7 +33,7 @@
       </Text>
       <Text layoutX="245.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Developed By : " />
       <Text layoutX="361.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Varun Dani (vxd162230)" />
-      <Text layoutX="534.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Jay Shah (jas160360))" />
+      <Text layoutX="534.0" layoutY="500.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Jay Shah (jas160630)" />
       <Label layoutX="297.0" layoutY="392.0" prefHeight="21.0" prefWidth="354.0" text="Please Enter Correct User Name or password " textFill="#c61c1c" visible="false" fx:id="errorMsg">
          <font>
             <Font name="System Bold" size="15.0" />

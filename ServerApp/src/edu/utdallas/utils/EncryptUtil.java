@@ -28,39 +28,6 @@ public class EncryptUtil {
 	private static final String PUBLIC_KEY_FILE = "Public.pem";
 	private static final String PRIVATE_KEY_FILE = "Private.pem";
 
-
-	public static void main(String[] args) {
-//		EncryptUtil rsaObj = new EncryptUtil();
-			String passString="password";
-			System.out.println("plaintext password: "+passString);
-			try
-			{
-				String passSha = makeSHA512Hash(passString);
-				System.out.println("SHA512 password: " +passSha);
-				String username="jay";
-				BigInteger nonce = new BigInteger(512, new SecureRandom());
-				System.out.println("nonce: "+nonce);
-				String appended = appendedd(username, nonce, passSha);
-			//	String hmacr=HMAC(username, nonce, passSha);
-				
-					/*
-					//Decrypt Data using Private Key
-					System.out.println("\n----------------DECRYPTION STARTED------------");
-					String xyz= rsaObj.decryptData(encryptedData1);
-					String abc= rsaObj.decryptData(encryptedData2);
-					StringBuilder sb1 = new StringBuilder(14);
-					sb1.append(xyz).append(abc);
-					String app = sb1.toString();
-					System.out.println("decrypted message: "+app);
-					
-				System.out.println("----------------DECRYPTION COMPLETED------------");
-				*/
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-	}
 	
 	
 	

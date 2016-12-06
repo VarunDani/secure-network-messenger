@@ -1,5 +1,6 @@
 package application;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -43,6 +44,10 @@ import model.MessegeSendBean;
 import util.AES;
 import util.EncryptUtil;
 
+/**
+ * This is controller class for java fx for main handling of application and fxml 
+ *
+ */
 public class Controller implements Initializable{
 
 	
@@ -85,7 +90,6 @@ public class Controller implements Initializable{
 	
 	static HashMap<String,ObservableList<Message>> userMsgs = new  HashMap<String,ObservableList<Message>> ();
 	
-	//TODO Blocks - Addition og HMAC with different generated Keys 
 	
 	private ServerSocket serverSocket;
 	
@@ -100,7 +104,15 @@ public class Controller implements Initializable{
 			try
 			{
 				Properties prop = new Properties();
-				prop.load(Controller.class.getResourceAsStream("/ServerConfig.properties"));
+				
+				FileInputStream file;
+			    String path = "./ServerConfig.properties";
+			    file = new FileInputStream(path);
+			    prop.load(file);
+			    file.close();
+			    
+			    
+				//prop.load(Controller.class.getResourceAsStream("./ServerConfig.properties"));
 				
 				// get the property value and print it out
 				SERVER_IP = prop.getProperty("SERVER_IP");
@@ -140,12 +152,13 @@ public class Controller implements Initializable{
 		if(mainPane!=null)
 		{
 			//Initialize All Items IN Messenger Panel
-			
 			fadeTransition(mainPane);
 			
-			
+			//Setting Items to User Lists on Initialization
 			userList.setItems(items);
 			userList.setCellFactory((ListView<User> l) -> new UserListCell());
+			
+			//setting event on clicking of ListView 
 			userList.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			        @Override
 			        public void handle(MouseEvent event) {
@@ -204,7 +217,7 @@ public class Controller implements Initializable{
 		    		            	
 		    		            	if(success)
 		    		            	{
-		    		            		userMsgs.get(userName).add(new Message("Messages in Conversation are End to End Encrypted",true));
+		    		            		/*userMsgs.get(userName).add(new Message("Messages in Conversation are End to End Encrypted",true));*/
 		    		            		chatMessages.setItems(userMsgs.get(userName));
 		    		            	}
 		    		            	else
@@ -229,6 +242,7 @@ public class Controller implements Initializable{
 			            
 			        }
 
+			        
 					private boolean sendDataToClient(MessegeSendBean replyBean,String otehrClientID) 
 					{
 						Socket otherClient = null;
@@ -284,8 +298,17 @@ public class Controller implements Initializable{
 		    	        	 ObjectOutputStream out = new ObjectOutputStream(outToServer);
 		    	        	 
 		    	        	//TODO - Add HMAC
+		    	        	 
+		    	        	 BigInteger bb = new BigInteger(myKeyList.get(userName).toString())
+		    	        			 .add(new BigInteger(String.valueOf(userMsgs.get(userName).size())));
+		    	        	
+		    	        	 
+		    				 
+				        	  System.out.println("Size : "+String.valueOf(userMsgs.get(userName).size()));
+				        	  System.out.println("big int : "+bb.toString());
+		    	        			 
 		    	        	 byte[] mac = EncryptUtil.hmacSHA256(text, 
-		    	        			 new BigInteger(myKeyList.get(userName).toString()).add(new BigInteger(String.valueOf(userMsgs.get(userName).size()))).toByteArray());
+		    	        			 bb.toByteArray());
 		    	        	 
 		    	        	 System.out.println("MAC : "+mac);
 		    	        	 
@@ -300,6 +323,8 @@ public class Controller implements Initializable{
 		    	        	 out.writeObject(encryptedMsg);
 		    	        	 
 							otherClient.close();
+							
+							System.out.println("Sending Done");
 						}
 						catch(Exception e)
 						{
@@ -310,6 +335,8 @@ public class Controller implements Initializable{
 			    }
 			});
 			
+			
+			//This is Listener part of All Client That will listen on particular Part and Perform Operation
 			try {
 				serverSocket = new ServerSocket(CLIENT_PORT);
 			} catch (IOException e1) {
@@ -346,20 +373,23 @@ public class Controller implements Initializable{
 								        	  
 								        	  BigInteger commonKey = new BigInteger(msgArray[0]);
 								        	  myKeyList.put(msgArray[1], commonKey);
+								        	  myIPList.put(msgArray[1], server.getRemoteSocketAddress().toString().split("/")[1].split(":")[0]);
 								        	  
+								        	 /* 
 								        	  Platform.runLater(new Runnable() {
 								            	    public void run() {
-								            	    	userMsgs.get(msgArray[1]).add(new Message("Messages in Conversation are End to End Encrypted",true));
+								            	    	userMsgs.get(msgArray[1]).add(new Message("Messages in Conversation are End to End Encrypted",false));
 								            	    }
-								            	});
+								            	});*/
 								        	  
 								        	  
 								          }
 								          else
 								          {
 								        	  //This is After Message
-								        	  //TODO - verify HMAC
-								        	
+								        	  System.out.println("Receiving ");
+								        	  
+								        	  //Decrypting Message  Coming From Another Client 
 								        	  String decryptedMessage = AES.decryptUseingAES(myKeyList.get(msgBean.getFromUser()), msgBean.getIV(), msgBean.getAESData());
 								        	  if(decryptedMessage==null || 
 								        			  (decryptedMessage!=null && decryptedMessage.startsWith("NotAvailable")))
@@ -369,17 +399,20 @@ public class Controller implements Initializable{
 								        	  }
 								        	  
 								        	  //calculate MAC
-								        	  byte[] calculatedMAC = EncryptUtil.hmacSHA256(decryptedMessage, 
-							    	        			 new BigInteger(myKeyList.get(msgBean.getFromUser()).toString())
-							    	        			 .add(new BigInteger(String.valueOf(userMsgs.get(msgBean.getFromUser()).size())))
-							    	        					 .add(new BigInteger("1")).toByteArray());
 								        	  
+								        	  BigInteger bb = new BigInteger(myKeyList.get(msgBean.getFromUser()).toString())
+					    	        			 .add(new BigInteger(String.valueOf(userMsgs.get(msgBean.getFromUser()).size()))).add(new BigInteger("1"));
+					    	        					 
+								        	  System.out.println("Size : "+String.valueOf(userMsgs.get(msgBean.getFromUser()).size()));
+								        	  System.out.println("mac key : "+bb.toString());
+								        	  
+								        	  
+								        	  byte[] calculatedMAC = EncryptUtil.hmacSHA256(decryptedMessage, 
+								        			  bb.toByteArray());
 								        	  
 								        	 byte[] incomingMac = msgBean.getMac();
 								        	 
-								        	 System.out.println(calculatedMAC);
-								        	 System.out.println(incomingMac);
-								        	 
+								        	 //MAC Verification
 								        	 if(!Arrays.equals(calculatedMAC, incomingMac))
 								        	 {
 								        		 System.out.println("Hello");
@@ -517,7 +550,7 @@ public class Controller implements Initializable{
 		String[] userNames = decryptedData.split("~");
 		for (int i = 1; i < (userNames.length-1); i++) 
 		{
-			System.out.println("dv : "+userNames[i]);
+			System.out.println("User : "+userNames[i]);
 			items.add(new User(userNames[i]));
 			userMsgs.put(userNames[i],FXCollections.observableArrayList());
 		}

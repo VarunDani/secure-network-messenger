@@ -23,7 +23,7 @@ public class MainServer  extends Thread {
 	      //serverSocket.setSoTimeout(3000);
 	   }
 
-	   
+	   //Listener for Server Thread
 	   public void run() 
 	   {
 		      while(true) 
@@ -64,6 +64,7 @@ public class MainServer  extends Thread {
 		            	//Check For Authentication // TODO
 		            	String[] userData = decryptedData.split("~");
 		            	
+		            	//If authenticated
 		            	if(PasswordStore.passwordList.get(userData[1])!=null && PasswordStore.passwordList.get(userData[1]).equals(userData[2]))
 		            	{
 		            		//Authenticated User - Send Buddy List 
@@ -96,7 +97,7 @@ public class MainServer  extends Thread {
 		            }
 		            else if(decryptedData.startsWith("GetSessionKey~"))
 		            {
-		            	//Get Session Key For Any Other Client  // TODO
+		            	//Get Session Key For Any Other Client  
 		            	String[] userData = decryptedData.split("~");
 		            	
 		            	if(!EncryptUtil.currentTimeStampChecking(userData[3]))
